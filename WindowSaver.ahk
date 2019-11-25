@@ -130,8 +130,8 @@ RestoreWindows:
 		WinActivate
 		; Try to find if window is already open. If it wasnt found, open a new window using it's path
 		If WinExist("ahk_id" . Win_ID) {
-			WinMove, ahk_id %Win_ID%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%  } Else
-		If WinExist(Win_Title) {
+			WinMove, ahk_id %Win_ID%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
+		} Else If WinExist(Win_Title) {
 		 	WinMove, %Win_Title%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
 		} Else If WinExist("ahk_class" . Win_Class) {
 			WinMove, ahk_class %Win_Class%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H% 
@@ -147,7 +147,7 @@ RestoreWindows:
 
   	if !SectionFound
   	{
-    	MsgBox,,%AppTitle%, Section does not exist in %FileName% `nLooking for: %SectionToFind%`n`nTo save a new section, use %SaveCombo%
+    	MsgBox,,%AppTitle%, Section does not exist in %FileName% `nLooking for: %SectionToFind%`n`nTo address this issue, you can press %SaveCombo% to save your current setup!
   	}
 	
   	WinActivate, %SavedActiveWindow% ;Restore window that was active at beginning of script
@@ -173,8 +173,8 @@ GetModuleExeName(PID)
 }
 
  GetMonCount:
-	; SysGet, tmp_, MonitorCount
-	; if tmp_ = %MonCount%
-	; 	return
+	SysGet, tmp_, MonitorCount
+	if tmp_ = %MonCount%
+		return
  	GoSub RestoreWindows
  	return
