@@ -25,7 +25,10 @@ Menu, Tray, Icon, WindowSaver.png
 
 MsgBox  , %AppTitle%, Welcome to %AppTitle% `n`nTo save window positions press %SaveCombo%`nLoading window positions is automatic when you plug in or disconnect a monitor
 
-SysGet, MonCount, MonitorCount
+SysGet, OriginalMonCount, MonitorCount
+SysGet, OriginalMonitorPrimary, MonitorPrimary
+WinGetPos, Originalx, Originaly, OriginalWidth, OriginalHeight, Program Manager
+
 SetTimer, GetMonCount, 10000
 
 ;Save current windows to file
@@ -173,8 +176,16 @@ GetModuleExeName(PID)
 }
 
  GetMonCount:
-	SysGet, tmp_, MonitorCount
-	if tmp_ = %MonCount%
-		return
- 	GoSub RestoreWindows
+	SysGet, MonCount, MonitorCount
+	SysGet, MonitorPrimary, MonitorPrimary
+	WinGetPos, x, y, Width, Height, Program Manager
+
+	if (MonCount != OriginalMonCount OR MonitorPrimary != OriginalMonitorPrimary OR Width != OriginalWidth OR Height != OriginalHeight)
+	{
+		GoSub RestoreWindows
+		OriginalMonCount := MonCount
+		OriginalMonitorPrimary := MonitorPrimary
+		OriginalWidth := Width
+		OriginalHeight := Height
+ 	}
  	return
