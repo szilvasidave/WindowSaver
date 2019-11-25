@@ -17,13 +17,13 @@ DetectHiddenWindows, On
 SetTitleMatchMode, 2
 
 AppTitle := "Window Saver"
-SaveCombo := "Ctrl+0"
-LoadCombo := "Ctrl+1"
+SaveCombo := "Shift+F12"
+LoadCombo := "Shift+F1"
 FileName :="window.cfg"
 CrLf=`r`n
 Menu, Tray, Icon, WindowSaver.png
 
-MsgBox  , %AppTitle%, Welcome to %AppTitle% `n`nTo save window positions press %SaveCombo%`nLoading window positions is automatic when you plug in or disconnect a monitor
+MsgBox  , %AppTitle%, Welcome to %AppTitle% `n`nTo save window positions press %SaveCombo%`nTo Load: %LoadCombo%
 
 SysGet, OriginalMonCount, MonitorCount
 SysGet, OriginalMonitorPrimary, MonitorPrimary
@@ -32,7 +32,7 @@ WinGetPos, Originalx, Originaly, OriginalWidth, OriginalHeight, Program Manager
 ;SetTimer, GetMonCount, 10000
 
 ;Save current windows to file
-^1::
++F12::
 	MsgBox  4, %AppTitle%, Save window positions?
 		IfMsgBox, NO, Return
 
@@ -93,7 +93,7 @@ WinGetPos, Originalx, Originaly, OriginalWidth, OriginalHeight, Program Manager
 
 
 ;Restore window positions from file
-^1::
++F1::
 RestoreWindows:
 	WinGetActiveTitle, SavedActiveWindow
   	ParmVals := "Title Class ID FullPath X Y W H"
