@@ -44,12 +44,22 @@ WinGetPos, Originalx, Originaly, OriginalWidth, OriginalHeight, Program Manager
 		MsgBox, Can't open "%FileName%" for writing.
 		Return
 	}
+
+	startLine := 0
+	numOfLines := 0
   	Loop, Read, %FileName%
   	{
 		If (SubStr(A_LoopReadLine,1) == SectionHeader())
 		{
-			MsgBox  , %AppTitle%, Data for your current monitor/virtual desktop/resolution setup already exists! Please delete section from line %A_Index% in the configuration file.`nYour current data is now also saved
-			Break
+			MsgBox  4, %AppTitle%, Data for your current monitor/virtual desktop/resolution setup already exists! Do you want to overwrite?
+			IfMsgBox, NO, Exit
+			startLine := A_Index
+			Continue
+		}
+		if (startLine != 0 AND SubStr(A_LoopReadLine,1,8) = "SECTION:")
+		{
+			numOfLines := A_Index - startLine
+			RemoveLines(startLine, numOfLines)
 		}
 	}
 	line:= SectionHeader() . CrLf
@@ -175,6 +185,15 @@ GetModuleExeName(PID)
 {
 	for process in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process where ProcessId=" PID)
 		return process.ExecutablePath
+}
+
+RemoveLines(startLine, numOfLines){
+       Loop, Read, %FileName%
+               if ( A_Index < StartLine )
+                       || ( A_Index >= StartLine + numOfLines )
+                               ret .= "`r`n" . A_LoopReadLine
+       FileDelete, % FileName
+       FileAppend, % SubStr(ret, 3), % FileName
 }
 
 ; GetMonCount:
