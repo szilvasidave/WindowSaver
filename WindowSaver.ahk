@@ -4,9 +4,8 @@
 ; Author: David Szilvasi
 ; Email: David_Szilvasi@Dell.com
 ; Version : v0.6
-; Release date: 26.11.2019
 ;
-; Minimum required AHK version: 1.1.32+
+; Tested and minimum required AHK version: 1.1.32+
 ;
 ;To-do: start with windows, when opening apps open on proper VD
 
@@ -19,6 +18,7 @@ SetTitleMatchMode, 2
 
 AppTitle := "Window Saver"
 SaveCombo := "Ctrl+0"
+LoadCombo := "Ctrl+1"
 FileName :="window.cfg"
 CrLf=`r`n
 Menu, Tray, Icon, WindowSaver.png
@@ -29,10 +29,10 @@ SysGet, OriginalMonCount, MonitorCount
 SysGet, OriginalMonitorPrimary, MonitorPrimary
 WinGetPos, Originalx, Originaly, OriginalWidth, OriginalHeight, Program Manager
 
-SetTimer, GetMonCount, 10000
+;SetTimer, GetMonCount, 10000
 
 ;Save current windows to file
-^0::
+^1::
 	MsgBox  4, %AppTitle%, Save window positions?
 		IfMsgBox, NO, Return
 
@@ -93,6 +93,7 @@ SetTimer, GetMonCount, 10000
 
 
 ;Restore window positions from file
+^1::
 RestoreWindows:
 	WinGetActiveTitle, SavedActiveWindow
   	ParmVals := "Title Class ID FullPath X Y W H"
@@ -155,6 +156,7 @@ RestoreWindows:
 	
   	WinActivate, %SavedActiveWindow% ;Restore window that was active at beginning of script
 	Return
+return
 
 ;Create standardized section header for later retrieval
 SectionHeader()
@@ -175,17 +177,17 @@ GetModuleExeName(PID)
 		return process.ExecutablePath
 }
 
- GetMonCount:
-	SysGet, MonCount, MonitorCount
-	SysGet, MonitorPrimary, MonitorPrimary
-	WinGetPos, x, y, Width, Height, Program Manager
+; GetMonCount:
+; 	SysGet, MonCount, MonitorCount
+; 	SysGet, MonitorPrimary, MonitorPrimary
+; 	WinGetPos, tmp_x, tmp_y, tmp_Width, tmp_Height, Program Manager
 
-	if (MonCount != OriginalMonCount OR MonitorPrimary != OriginalMonitorPrimary OR Width != OriginalWidth OR Height != OriginalHeight)
-	{
-		GoSub RestoreWindows
-		OriginalMonCount := MonCount
-		OriginalMonitorPrimary := MonitorPrimary
-		OriginalWidth := Width
-		OriginalHeight := Height
- 	}
- 	return
+; 	if MonCount != OriginalMonCount OR MonitorPrimary != OriginalMonitorPrimary OR tmp_Width != OriginalWidth OR tmp_Height != OriginalHeight
+; 	{
+; 		OriginalMonCount := MonCount
+; 		OriginalMonitorPrimary := MonitorPrimary
+; 		OriginalWidth := tmp_Width
+; 		OriginalHeight := tmp_Height
+; 		GoSub RestoreWindows
+;  	}
+;  	return
