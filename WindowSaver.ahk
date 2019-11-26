@@ -20,7 +20,7 @@ AppTitle := "Window Saver"
 SaveCombo := "Ctrl+F12"
 LoadCombo := "Ctrl+F1"
 FileName :="window.cfg"
-Menu, Tray, Icon, WindowSaver.png
+Menu, Tray, Icon, Icon.ico
 
 MsgBox  0, %AppTitle%, Welcome to %AppTitle% `n`nTo save window positions press %SaveCombo%`nTo Load: %LoadCombo%
 
