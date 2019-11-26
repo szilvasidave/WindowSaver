@@ -20,7 +20,14 @@ AppTitle := "Window Saver"
 SaveCombo := "Ctrl+F12"
 LoadCombo := "Ctrl+F1"
 FileName :="window.cfg"
+
 Menu, Tray, Icon, Icon.ico
+Menu, Tray, Tip, %AppTitle%
+Menu, Tray, NoStandard
+Menu, Tray, Add, About
+Menu, Tray, Add
+Menu, Tray, Add, Exit, exit
+Menu, Tray, Default, Exit
 
 MsgBox  0, %AppTitle%, Welcome to %AppTitle% `n`nTo save window positions press %SaveCombo%`nTo Load: %LoadCombo%
 
@@ -171,3 +178,9 @@ GetModuleExeName(PID)
 ; 		GoSub RestoreWindows
 ;  	}
 ;  	return
+Exit:
+	ExitApp
+
+About:
+	MsgBox 0, %AppTitle%, App created by David Szilvasi`nFor feedback and questions contact david_szilvasi@dell.com
+	Return
