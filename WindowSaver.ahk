@@ -3,9 +3,9 @@
 ;
 ; Author: David Szilvasi
 ; Email: David_Szilvasi@Dell.com
-; Version : v0.6
+; Version : v0.8
 ;
-; Tested and minimum required AHK version: 1.1.32+
+; Tested and minimum required AHK version: 1.1.32
 ;
 ;To-do: start with windows, when opening apps open on proper VD
 
@@ -33,40 +33,29 @@ WinGetPos, Originalx, Originaly, OriginalWidth, OriginalHeight, Program Manager
 
 ;Save current windows to file
 +F12::
+SaveWindows:
 	MsgBox  4, %AppTitle%, Save window positions?
 		IfMsgBox, NO, Return
 
 	WinGetActiveTitle, SavedActiveWindow
 
-	file := FileOpen(FileName, "a")
-	if !IsObject(file)
-	{
-		MsgBox, Can't open "%FileName%" for writing.
-		Return
-	}
+	SysGet, MonitorCount, MonitorCount
+	SysGet, MonitorPrimary, MonitorPrimary
+    WinGetPos, PMx, PMy, PMw, PMh, Program Manager
+	IniRead, sectionNameList, %Filename%
+	sectionName := "SECTION: Monitors=" . MonitorCount . ",MonitorPrimary=" . MonitorPrimary . "; Desktop size:" . PMx . "," . PMy . "," . PMw . "," . PMh
 
-	startLine := 0
-	numOfLines := 0
-  	Loop, Read, %FileName%
-  	{
-		If (SubStr(A_LoopReadLine,1) == SectionHeader())
-		{
-			MsgBox  4, %AppTitle%, Data for your current monitor/virtual desktop/resolution setup already exists! Do you want to overwrite?
-			IfMsgBox, NO, Exit
-			startLine := A_Index
-			Continue
-		}
-		if (startLine != 0 AND SubStr(A_LoopReadLine,1,8) = "SECTION:")
-		{
-			numOfLines := A_Index - startLine
-			RemoveLines(startLine, numOfLines)
-		}
-	}
-	line:= SectionHeader() . CrLf
-	file.Write(line)
+	If InStr(sectionNameList, sectionName)
+		MsgBox 4, %AppTitle%, Configuration already exists. Overwrite?
+			IfMsgBox, NO, Return
+			IfMsgBox, YES
+			{
+				IniDelete, %FileName%, %sectionName%
+			}
 
 	;Get all non-hidden windows
 	WinGet windows, List
+	Pairs := ""
 	Loop % windows
 	{
 		id := windows%A_Index%
@@ -93,39 +82,39 @@ WinGetPos, Originalx, Originaly, OriginalWidth, OriginalHeight, Program Manager
 		{
 			continue
 		}
-		line := "Title=" . Win_Title . "`,Class=" . class . "`,ID=" . id . "`,FullPath=" . Win_FullPath . "`,X=" . Win_X . "`,Y=" . Win_Y . "`,W=" . Win_W . "`,H=" . Win_H . "`r`n"
-		file.Write(line)
+
+		Pairs .= "Title=" . Win_Title . "`,Class=" . class . "`,ID=" . id . "`,FullPath=" . Win_FullPath . "`,X=" . Win_X . "`,Y=" . Win_Y . "`,W=" . Win_W . "`,H=" . Win_H . "`n"
 	}
-	file.write(CrLf)  ;Add blank line after section
-  	file.Close()
+	IniWrite, %Pairs%, %Filename%, %sectionName% 
+
   	WinActivate, %SavedActiveWindow% ;Restore window that was active at beginning of script
 	Return
-
+Return
 
 ;Restore window positions from file
 +F1::
 RestoreWindows:
 	WinGetActiveTitle, SavedActiveWindow
   	ParmVals := "Title Class ID FullPath X Y W H"
-  	SectionToFind := SectionHeader()
-  	SectionFound := 0
+	Win_Title:="", Win_Class:="", Win_ID:="", Win_FullPath:="", Win_X:=0, Win_Y:=0, Win_W:=0, Win_H:=0
+	
+	SysGet, MonitorCount, MonitorCount
+	SysGet, MonitorPrimary, MonitorPrimary
+    WinGetPos, PMx, PMy, PMw, PMh, Program Manager
+	IniRead, sectionNameList, %Filename%
+	sectionName := "SECTION: Monitors=" . MonitorCount . ",MonitorPrimary=" . MonitorPrimary . "; Desktop size:" . PMx . "," . PMy . "," . PMw . "," . PMh
 
-  	Loop, Read, %FileName%
-  	{
-		;If no section was found and this line is not the current config section line->jump to next iteration
-    	if !SectionFound AND (A_LoopReadLine!=SectionToFind) 
-			Continue
-		
-		;Exit if another section was already found and iteration reached end of recorded apps
-		If (SectionFound AND SubStr(A_LoopReadLine,1,8) = "SECTION:")
-			Break
-		
-        SectionFound:=1
-		Win_Title:="", Win_Class:="", Win_ID:="", Win_FullPath:="", Win_X:=0, Win_Y:=0, Win_W:=0, Win_H:=0
-		
-		If (A_LoopReadLine == SectionToFind) OR (A_LoopReadLine == "")
-			Continue ; Jump to next iteration to start reading data if current config section found or if line empty
-		Loop, Parse, A_LoopReadLine, "`,"
+	If !InStr(sectionNameList, sectionName)
+		MsgBox 4, %AppTitle%, Current configuration wasnt found.`nWould you like to save first?
+			IfMsgBox, Yes, Goto SaveWindows
+
+	IniRead, sectionValues, %FileName%, %sectionName%
+	sectionValuesArr := StrSplit(sectionValues , "`n")
+
+	Loop % sectionValuesArr.MaxIndex()
+	{
+		currentLine := sectionValuesArr[A_Index]
+		Loop, Parse, currentLine, "`,"
 		{
 			EqualPos := InStr(A_LoopField,"=")
 			Var := SubStr(A_LoopField,1,EqualPos-1)
@@ -140,13 +129,11 @@ RestoreWindows:
 				Win_%Var% := Val
 			}
 		}
-		WinRestore
-		WinActivate
 		; Try to find if window is already open. If it wasnt found, open a new window using it's path
 		If WinExist("ahk_id" . Win_ID) {
 			WinMove, ahk_id %Win_ID%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
 		} Else If WinExist(Win_Title) {
-		 	WinMove, %Win_Title%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
+			WinMove, %Win_Title%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
 		} Else If WinExist("ahk_class" . Win_Class) {
 			WinMove, ahk_class %Win_Class%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H% 
 		} Else If WinExist("ahk_exe" . Win_FullPath) {
@@ -159,41 +146,14 @@ RestoreWindows:
 		}
 	}
 
-  	if !SectionFound
-  	{
-    	MsgBox,,%AppTitle%, Section does not exist in %FileName% `nLooking for: %SectionToFind%`n`nTo address this issue, you can press %SaveCombo% to save your current setup!
-  	}
-	
   	WinActivate, %SavedActiveWindow% ;Restore window that was active at beginning of script
 	Return
-return
-
-;Create standardized section header for later retrieval
-SectionHeader()
-{
-	SysGet, MonitorCount, MonitorCount
-	SysGet, MonitorPrimary, MonitorPrimary
-	line := "SECTION: Monitors=" . MonitorCount . ",MonitorPrimary=" . MonitorPrimary
-
-    WinGetPos, x, y, Width, Height, Program Manager
-	line:= line . "; Desktop size:" . x . "," . y . "," . width . "," . height
-
-	Return %line%
-}
+Return
 
 GetModuleExeName(PID) 
 {
 	for process in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process where ProcessId=" PID)
 		return process.ExecutablePath
-}
-
-RemoveLines(startLine, numOfLines){
-       Loop, Read, %FileName%
-               if ( A_Index < StartLine )
-                       || ( A_Index >= StartLine + numOfLines )
-                               ret .= "`r`n" . A_LoopReadLine
-       FileDelete, % FileName
-       FileAppend, % SubStr(ret, 3), % FileName
 }
 
 ; GetMonCount:
