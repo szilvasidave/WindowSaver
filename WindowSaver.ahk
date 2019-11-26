@@ -20,10 +20,9 @@ AppTitle := "Window Saver"
 SaveCombo := "Shift+F12"
 LoadCombo := "Shift+F1"
 FileName :="window.cfg"
-CrLf=`r`n
 Menu, Tray, Icon, WindowSaver.png
 
-MsgBox  , %AppTitle%, Welcome to %AppTitle% `n`nTo save window positions press %SaveCombo%`nTo Load: %LoadCombo%
+MsgBox  0, %AppTitle%, Welcome to %AppTitle% `n`nTo save window positions press %SaveCombo%`nTo Load: %LoadCombo%
 
 SysGet, OriginalMonCount, MonitorCount
 SysGet, OriginalMonitorPrimary, MonitorPrimary
@@ -70,7 +69,7 @@ SaveWindows:
 				continue
 		}
 		WinGet, style, style, ahk_id %id%
-		if !(style & 0xC00000) OR !(style & 0x10000000) ; if the window doesn't have a wintitle bar or is not on any virtual desktop
+		if !(style & 0xC00000) OR !(style & 0x10000000) ; if the window doesn't have a title bar or is not on any virtual desktop
 		{
 			; If Win_Title not contains ...  ; add exceptions
 				continue
@@ -132,8 +131,10 @@ RestoreWindows:
 		; Try to find if window is already open. If it wasnt found, open a new window using it's path
 		If WinExist("ahk_id" . Win_ID) {
 			WinMove, ahk_id %Win_ID%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
+			;sleep 100
 		} Else If WinExist(Win_Title) {
 			WinMove, %Win_Title%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
+			;sleep 100
 		} Else If WinExist("ahk_class" . Win_Class) {
 			WinMove, ahk_class %Win_Class%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H% 
 		} Else If WinExist("ahk_exe" . Win_FullPath) {
