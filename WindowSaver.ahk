@@ -17,8 +17,8 @@ DetectHiddenWindows, On
 SetTitleMatchMode, 2
 
 AppTitle := "Window Saver"
-SaveCombo := "Shift+F12"
-LoadCombo := "Shift+F1"
+SaveCombo := "Ctrl+F12"
+LoadCombo := "Ctrl+F1"
 FileName :="window.cfg"
 Menu, Tray, Icon, WindowSaver.png
 
@@ -31,7 +31,7 @@ WinGetPos, Originalx, Originaly, OriginalWidth, OriginalHeight, Program Manager
 ;SetTimer, GetMonCount, 10000
 
 ;Save current windows to file
-+F12::
+^F12::
 SaveWindows:
 	MsgBox  4, %AppTitle%, Save window positions?
 		IfMsgBox, NO, Return
@@ -91,7 +91,7 @@ SaveWindows:
 Return
 
 ;Restore window positions from file
-+F1::
+^F1::
 RestoreWindows:
 	WinGetActiveTitle, SavedActiveWindow
   	ParmVals := "Title Class ID FullPath X Y W H"
