@@ -3,23 +3,23 @@
 ;
 ; Tested and minimum required AHK version: 1.1.32
 ;
-;To-do: start with windows, when opening apps open on proper VD
+;To-do: start with windows, when opening apps open on proper VD, update version check issue
 
 #NoEnv
 #SingleInstance, Force
 SendMode Input
 SetWorkingDir %A_ScriptDir%
+FileInstall, version.data, version.data
 DetectHiddenWindows, On
 SetTitleMatchMode, 2
-FileEncoding , UTF-16
 #KeyHistory, 0
 ListLines, Off
 
 FileName :="window.cfg"
 Author := David Szilvasi
 Email := David_Szilvasi@Dell.com
-AppVersion := " 0.8.1"
-AppTitle := "Window Saver" . AppVersion
+FileRead, AppVersion, version.data
+AppTitle := "Window Saver " . AppVersion
 debug := 0
 
 Menu, Tray, Icon, Icon.ico
@@ -165,9 +165,16 @@ RestoreWindows:
 		; Try to find if window is already open. If it wasnt found, open a new window using it's path
 		If WinExist("ahk_id" . Win_ID) {
 			WinMove, ahk_id %Win_ID%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
-		} Else If WinExist(Win_Title . "ahk_class" . Win_Class) {
-			WinGet, Win_ID, ID, %Win_Title% ahk_class %Win_Class%
-			WinMove, ahk_id %Win_ID%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
+		} Else If WinExist("ahk_class" . Win_Class) {
+			WinGet, Win_Count, Count, ahk_class %Win_Class%
+			If (Win_Count == 1) {
+				WinMove, ahk_class %Win_Class%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
+			}
+		} Else If WinExist(Win_Title) {
+			;WinGet, Win_Count, Count, %Win_Title%
+			;If (Win_Count == 1) {
+				WinMove, %Win_Title%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
+			;}
 		} Else If WinExist("ahk_exe" . Win_FullPath) {
 			WinMove, ahk_exe %Win_FullPath%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
 		} Else {
@@ -223,22 +230,24 @@ Reload:
 
 CheckForUpdate:
 	UrlDownloadToFile, https://david.szilvasi.family/WindowSaver/version.data, version.data
-	FileRead, AppVersion_tmp, version.data
-	If AppVersion != AppVersion_tmp
+	FileRead, AppVersion_new, version.data
+	If (AppVersion != AppVersion_new)
 	{
 		MsgBox 4, %AppTitle%,
 		(
 A newer, better version of %AppTitle% is available!
 Current version: %AppVersion%
-New version: %AppVersion_tmp%
+New version: %AppVersion_new%
 
 Would you like to update?
 		)
 		IfMsgBox, Yes
 		{
-			UrlDownloadToFile, https://david.szilvasi.family/WindowSaver/WindowSaver.exe, WindowSaver.exe
+			UrlDownloadToFile, https://david.szilvasi.family/WindowSaver/latest/WindowSaver.exe, WindowSaver.exe
 			Goto Reload
 		}
+	} Else {
+		MsgBox 0, %AppTitle%, You already have the latest version of %AppTitle%!
 	}
 	Return
 
