@@ -88,6 +88,7 @@ SaveWindows:
 		WinGetTitle Win_Title, ahk_id %id%
 		If (Win_Title = "")
 			continue
+		Win_Title := StrReplace(Win_Title, "`,")
 		WinGetClass class, ahk_id %id%
 		If (class = "ApplicationFrameWindow") 
 		{
@@ -102,13 +103,11 @@ SaveWindows:
 				continue
 		}
 		WinGetPos Win_X, Win_Y, Win_W, Win_H, ahk_id %id%
-		WinGet, PID, PID , ahk_id %id%
-		Win_FullPath := GetModuleExeName(PID)
 		if ((Win_X = 0 OR Win_Y = 0) AND Win_W = 0 AND Win_H = 0)
 		{
 			continue
 		}
-
+		WinGet, Win_FullPath, ProcessPath, ahk_id %id%
 		Pairs .= "Title=" . Win_Title . "`,Class=" . class . "`,ID=" . id . "`,FullPath=" . Win_FullPath . "`,X=" . Win_X . "`,Y=" . Win_Y . "`,W=" . Win_W . "`,H=" . Win_H . "`n"
 	}
 	IniWrite, %Pairs%, %Filename%, %sectionName% 
@@ -133,11 +132,10 @@ RestoreWindows:
 			IfMsgBox, Yes, Goto SaveWindows
 
 	IniRead, sectionValues, %FileName%, %sectionName%
-	sectionValuesArr := StrSplit(sectionValues , "`n")
 
-	Loop % sectionValuesArr.MaxIndex()
+	Loop, Parse, sectionValues, "`n"
 	{
-		currentLine := sectionValuesArr[A_Index]
+		currentLine := A_LoopField
 		Loop, Parse, currentLine, "`,"
 		{
 			EqualPos := InStr(A_LoopField,"=")
@@ -158,10 +156,10 @@ RestoreWindows:
 			WinMove, ahk_id %Win_ID%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
 		} Else If WinExist(Win_Title) {
 			WinMove, %Win_Title%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
-		} Else If WinExist("ahk_class" . Win_Class) {
-			WinMove, ahk_class %Win_Class%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H% 
+
 		} Else If WinExist("ahk_exe" . Win_FullPath) {
-			WinGet, Win_Title , , ahk_exe %Win_FullPath%
+			;WinGet, Win_Title, "ahk_exe" . Win_FullPath
+			WinGet, Win_ID, ID , ahk_exe %Win_FullPath%
 			WinMove, ahk_id %Win_ID%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
 		} Else {
 			Run %Win_FullPath%,,,CurrentAppNewPID
@@ -172,12 +170,6 @@ RestoreWindows:
 
   	WinActivate, %SavedActiveWindow% ;Restore window that was active at beginning of script
 	Return
-
-GetModuleExeName(PID) 
-{
-	for process in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process where ProcessId=" PID)
-		return process.ExecutablePath
-}
 
 ; GetMonCount:
 ; 	SysGet, MonCount, MonitorCount
