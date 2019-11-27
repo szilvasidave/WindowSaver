@@ -12,19 +12,23 @@ SetWorkingDir %A_ScriptDir%
 DetectHiddenWindows, On
 SetTitleMatchMode, 2
 FileEncoding , UTF-16
+#KeyHistory, 0
+ListLines, Off
 
-AppTitle := "Window Saver" . AppVersion
 FileName :="window.cfg"
 Author := David Szilvasi
 Email := David_Szilvasi@Dell.com
-AppVersion := " 0.9"
-
+AppVersion := " 0.8.1"
+AppTitle := "Window Saver" . AppVersion
+debug := 0
 
 Menu, Tray, Icon, Icon.ico
 Menu, Tray, Tip, %AppTitle%
 Menu, Tray, NoStandard
 Menu, Tray, Add, About, About
 Menu, Tray, Add, Reload, Reload
+Menu, Tray, Add, Check for update, CheckForUpdate
+Menu, Tray, Add, Debug Mode, DebugMode
 Menu, Tray, Add
 Menu, Tray, Add, Exit, Exit
 Menu, Tray, Default, About
@@ -35,7 +39,6 @@ If FileExist(FileName) == ""
 	IniWrite, "^F12", %FileName%, Settings, SaveCombo
 	IniWrite, "^F1", %FileName%, Settings, LoadCombo
 	IniWrite , "For a list of special keys' symbols go to https://www.autohotkey.com/docs/Hotkeys.htm", %FileName%, Settings, Info
-
 	}
 IniRead, SaveCombo, %FileName%, Settings, SaveCombo
 IniRead, LoadCombo, %FileName%, Settings, LoadCombo
@@ -55,6 +58,11 @@ More info on the hotkeys can be found in the %FileName% file
 SysGet, OriginalMonCount, MonitorCount
 SysGet, OriginalMonitorPrimary, MonitorPrimary
 WinGetPos, Originalx, Originaly, OriginalWidth, OriginalHeight, Program Manager
+
+;Check every Monday for updates
+If A_WDay == 2 ;If it's Monday, check for updates
+	GoSub CheckForUpdate
+
 Return
 ;SetTimer, GetMonCount, 10000
 
@@ -108,8 +116,11 @@ SaveWindows:
 			continue
 		}
 		WinGet, Win_FullPath, ProcessPath, ahk_id %id%
+		;WinGet, Win_Controls, ControlList , ahk_id %id%  "Win_Controls=" . Win_Controls .
 		Pairs .= "Title=" . Win_Title . "`,Class=" . class . "`,ID=" . id . "`,FullPath=" . Win_FullPath . "`,X=" . Win_X . "`,Y=" . Win_Y . "`,W=" . Win_W . "`,H=" . Win_H . "`n"
 	}
+	If debug == 1
+		MsgBox % Pairs
 	IniWrite, %Pairs%, %Filename%, %sectionName% 
 
   	WinActivate, %SavedActiveWindow% ;Restore window that was active at beginning of script
@@ -118,8 +129,8 @@ SaveWindows:
 ;Restore window positions from file
 RestoreWindows:
 	WinGetActiveTitle, SavedActiveWindow
-  	ParmVals := "Title Class ID FullPath X Y W H"
-	Win_Title:="", Win_Class:="", Win_ID:="", Win_FullPath:="", Win_X:=0, Win_Y:=0, Win_W:=0, Win_H:=0
+  	ParmVals := "Title Class ID FullPath X Y W H Controls"
+	Win_Title:="", Win_Class:="", Win_ID:="", Win_FullPath:="", Win_X:=0, Win_Y:=0, Win_W:=0, Win_H:=0, Win_Controls:=""
 	
 	SysGet, MonitorCount, MonitorCount
 	SysGet, MonitorPrimary, MonitorPrimary
@@ -144,7 +155,7 @@ RestoreWindows:
 			If InStr(ParmVals, %Var%)
 			{
 				;Remove any surrounding double quotes (")
-				If (SubStr(Val,1,1)=Chr(34)) 
+				If (SubStr(Val,1,1)==Chr(34)) 
 				{
 					Val := SubStr(Val, 2, StrLen(Val)-2)
 				}
@@ -154,16 +165,14 @@ RestoreWindows:
 		; Try to find if window is already open. If it wasnt found, open a new window using it's path
 		If WinExist("ahk_id" . Win_ID) {
 			WinMove, ahk_id %Win_ID%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
-		} Else If WinExist(Win_Title) {
-			WinMove, %Win_Title%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
-
-		} Else If WinExist("ahk_exe" . Win_FullPath) {
-			;WinGet, Win_Title, "ahk_exe" . Win_FullPath
-			WinGet, Win_ID, ID , ahk_exe %Win_FullPath%
+		} Else If WinExist(Win_Title . "ahk_class" . Win_Class) {
+			WinGet, Win_ID, ID, %Win_Title% ahk_class %Win_Class%
 			WinMove, ahk_id %Win_ID%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
+		} Else If WinExist("ahk_exe" . Win_FullPath) {
+			WinMove, ahk_exe %Win_FullPath%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
 		} Else {
 			Run %Win_FullPath%,,,CurrentAppNewPID
-			sleep 1000
+			WinWait, ahk_pid %CurrentAppNewPID%
 			WinMove, ahk_pid %CurrentAppNewPID%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H% ; This line isnt working
 		}
 	}
@@ -207,6 +216,46 @@ When you Dock/Undock again, just press %LoadCombo% and it will restore your prev
 More info on the hotkeys can be found in the %FileName% file
 	)
 	Return
+
 Reload:
 	Reload
+	Return
+
+CheckForUpdate:
+	UrlDownloadToFile, https://david.szilvasi.family/WindowSaver/version.data, version.data
+	FileRead, AppVersion_tmp, version.data
+	If AppVersion != AppVersion_tmp
+	{
+		MsgBox 4, %AppTitle%,
+		(
+A newer, better version of %AppTitle% is available!
+Current version: %AppVersion%
+New version: %AppVersion_tmp%
+
+Would you like to update?
+		)
+		IfMsgBox, Yes
+		{
+			UrlDownloadToFile, https://david.szilvasi.family/WindowSaver/WindowSaver.exe, WindowSaver.exe
+			Goto Reload
+		}
+	}
+	Return
+
+DebugMode:
+	If (debug == 0) {
+		MsgBox 4, %AppTitle%, This mode is for debugging errors in the app. Please use it ONLY if you know what you're doing!`nAre you sure you want to continue?
+		IfMsgBox, YES
+		{
+			debug := 1
+			#KeyHistory, 10
+			ListLines, On
+			Menu, Tray, ToggleCheck, Debug Mode
+			;SplashTextOn, 500, 500, Debug Mode, %KeyHistory%
+		}
+	} Else {
+		debug := 0
+		Menu, Tray, ToggleCheck, Debug Mode
+		;SplashTextOff
+	}
 	Return
