@@ -1,44 +1,64 @@
 ﻿; Window Saver
 ; Save and Restore window positions when docking/undocking
 ;
-; Author: David Szilvasi
-; Email: David_Szilvasi@Dell.com
-; Version : v0.8
-;
 ; Tested and minimum required AHK version: 1.1.32
 ;
 ;To-do: start with windows, when opening apps open on proper VD
 
 #NoEnv
+#SingleInstance, Force
 SendMode Input
 SetWorkingDir %A_ScriptDir%
-#SingleInstance, Force
 DetectHiddenWindows, On
 SetTitleMatchMode, 2
+FileEncoding , UTF-16
 
-AppTitle := "Window Saver"
-SaveCombo := "Ctrl+F12"
-LoadCombo := "Ctrl+F1"
+AppTitle := "Window Saver" . AppVersion
 FileName :="window.cfg"
+Author := David Szilvasi
+Email := David_Szilvasi@Dell.com
+AppVersion := " 0.9"
+
 
 Menu, Tray, Icon, Icon.ico
 Menu, Tray, Tip, %AppTitle%
 Menu, Tray, NoStandard
-Menu, Tray, Add, About
+Menu, Tray, Add, About, About
+Menu, Tray, Add, Reload, Reload
 Menu, Tray, Add
-Menu, Tray, Add, Exit, exit
-Menu, Tray, Default, Exit
+Menu, Tray, Add, Exit, Exit
+Menu, Tray, Default, About
 
-MsgBox  0, %AppTitle%, Welcome to %AppTitle% `n`nTo save window positions press %SaveCombo%`nTo Load: %LoadCombo%
+If FileExist(FileName) == ""
+	{
+	FileAppend , , %FileName%
+	IniWrite, "^F12", %FileName%, Settings, SaveCombo
+	IniWrite, "^F1", %FileName%, Settings, LoadCombo
+	IniWrite , "For a list of special keys' symbols go to https://www.autohotkey.com/docs/Hotkeys.htm", %FileName%, Settings, Info
+
+	}
+IniRead, SaveCombo, %FileName%, Settings, SaveCombo
+IniRead, LoadCombo, %FileName%, Settings, LoadCombo
+
+Hotkey, %SaveCombo%, SaveWindows
+Hotkey, %LoadCombo%, RestoreWindows
+
+MsgBox  0, %AppTitle%,
+(
+Welcome to %AppTitle%
+
+To save window positions press %SaveCombo%
+To Load: %LoadCombo%
+More info on the hotkeys can be found in the %FileName% file
+)
 
 SysGet, OriginalMonCount, MonitorCount
 SysGet, OriginalMonitorPrimary, MonitorPrimary
 WinGetPos, Originalx, Originaly, OriginalWidth, OriginalHeight, Program Manager
-
+Return
 ;SetTimer, GetMonCount, 10000
 
 ;Save current windows to file
-^F12::
 SaveWindows:
 	MsgBox  4, %AppTitle%, Save window positions?
 		IfMsgBox, NO, Return
@@ -95,10 +115,8 @@ SaveWindows:
 
   	WinActivate, %SavedActiveWindow% ;Restore window that was active at beginning of script
 	Return
-Return
 
 ;Restore window positions from file
-^F1::
 RestoreWindows:
 	WinGetActiveTitle, SavedActiveWindow
   	ParmVals := "Title Class ID FullPath X Y W H"
@@ -139,9 +157,9 @@ RestoreWindows:
 		If WinExist("ahk_id" . Win_ID) {
 			WinMove, ahk_id %Win_ID%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
 			;sleep 100
-		} Else If WinExist(Win_Title) {
-			WinMove, %Win_Title%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
-			;sleep 100
+		; } Else If WinExist(Win_Title) {
+		; 	WinMove, %Win_Title%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
+		; 	;sleep 100
 		} Else If WinExist("ahk_class" . Win_Class) {
 			WinMove, ahk_class %Win_Class%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H% 
 		} Else If WinExist("ahk_exe" . Win_FullPath) {
@@ -156,7 +174,6 @@ RestoreWindows:
 
   	WinActivate, %SavedActiveWindow% ;Restore window that was active at beginning of script
 	Return
-Return
 
 GetModuleExeName(PID) 
 {
@@ -182,5 +199,23 @@ Exit:
 	ExitApp
 
 About:
-	MsgBox 0, %AppTitle%, App created by David Szilvasi`nFor feedback and questions contact david_szilvasi@dell.com
+	MsgBox 0, %AppTitle%,
+	(
+	App created by %Author%
+For feedback and questions contact %Email%
+
+This app was created to be able to save and restore window positions and sizes when docking/undocking your notebook.
+
+How to set up:
+1. Save your current window positions and sizes by pressing %SaveCombo%
+2. Undock/Dock your notebook - to have a different resolution/no. of monitors than before - and arrange the windows as you like
+3. Save this configuration also by pressing %SaveCombo%
+(You can add as many monitor setups as you like. If a monitor setup was saved before, it can be overwritten)
+
+When you Dock/Undock again, just press %LoadCombo% and it will restore your previously saved configuration.
+More info on the hotkeys can be found in the %FileName% file
+	)
+	Return
+Reload:
+	Reload
 	Return
