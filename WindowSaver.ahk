@@ -156,10 +156,8 @@ RestoreWindows:
 		; Try to find if window is already open. If it wasnt found, open a new window using it's path
 		If WinExist("ahk_id" . Win_ID) {
 			WinMove, ahk_id %Win_ID%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
-			;sleep 100
-		; } Else If WinExist(Win_Title) {
-		; 	WinMove, %Win_Title%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
-		; 	;sleep 100
+		} Else If WinExist(Win_Title) {
+			WinMove, %Win_Title%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
 		} Else If WinExist("ahk_class" . Win_Class) {
 			WinMove, ahk_class %Win_Class%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H% 
 		} Else If WinExist("ahk_exe" . Win_FullPath) {
@@ -195,6 +193,7 @@ GetModuleExeName(PID)
 ; 		GoSub RestoreWindows
 ;  	}
 ;  	return
+
 Exit:
 	ExitApp
 
