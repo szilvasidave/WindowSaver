@@ -3,21 +3,21 @@
 ;
 ; Tested and minimum required AHK version: 1.1.32
 ;
-;To-do: start with windows, when opening apps open on proper VD, update version check issue
 
 #NoEnv
 #SingleInstance, Force
 SendMode Input
 SetWorkingDir %A_ScriptDir%
 FileInstall, version.data, version.data
+FileInstall, Icon.ico, Icon.ico
 DetectHiddenWindows, On
 SetTitleMatchMode, 2
 #KeyHistory, 0
 ListLines, Off
 
 FileName :="window.cfg"
-Author := David Szilvasi
-Email := David_Szilvasi@Dell.com
+Author := "David Szilvasi"
+Email := "szilvasi.dave@gmail.com"
 FileRead, AppVersion, version.data
 AppTitle := "Window Saver " . AppVersion
 debug := 0
@@ -128,6 +128,7 @@ SaveWindows:
 
 ;Restore window positions from file
 RestoreWindows:
+	;DetectHiddenWindows, Off
 	WinGetActiveTitle, SavedActiveWindow
   	ParmVals := "Title Class ID FullPath X Y W H Controls"
 	Win_Title:="", Win_Class:="", Win_ID:="", Win_FullPath:="", Win_X:=0, Win_Y:=0, Win_W:=0, Win_H:=0, Win_Controls:=""
@@ -163,27 +164,27 @@ RestoreWindows:
 			}
 		}
 		; Try to find if window is already open. If it wasnt found, open a new window using it's path
+		WinGet, Win_Class_Count, Count, ahk_class %Win_Class%
+		WinGet, Win_Title_Count, Count, %Win_Title%
 		If WinExist("ahk_id" . Win_ID) {
+			;MsgBox Using ID - %Win_Title%
 			WinMove, ahk_id %Win_ID%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
-		} Else If WinExist("ahk_class" . Win_Class) {
-			WinGet, Win_Count, Count, ahk_class %Win_Class%
-			If (Win_Count == 1) {
-				WinMove, ahk_class %Win_Class%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
-			}
-		} Else If WinExist(Win_Title) {
-			;WinGet, Win_Count, Count, %Win_Title%
-			;If (Win_Count == 1) {
-				WinMove, %Win_Title%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
-			;}
+		} Else If (WinExist("ahk_class" . Win_Class)) { ; AND (Win_Class_Count == 1)
+			;MsgBox Using class- %Win_Title%
+			WinMove, ahk_class %Win_Class%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
+		} Else If (WinExist(Win_Title)){ ; AND (Win_Title_Count == 1)
+			;MsgBox Using Title - %Win_Title%
+			WinMove, %Win_Title%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
 		} Else If WinExist("ahk_exe" . Win_FullPath) {
+			;MsgBox Using EXE - %Win_Title%
 			WinMove, ahk_exe %Win_FullPath%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
 		} Else {
+			;MsgBox Starting program - %Win_Title%
 			Run %Win_FullPath%,,,CurrentAppNewPID
 			WinWait, ahk_pid %CurrentAppNewPID%
 			WinMove, ahk_pid %CurrentAppNewPID%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H% ; This line isnt working
 		}
 	}
-
   	WinActivate, %SavedActiveWindow% ;Restore window that was active at beginning of script
 	Return
 
@@ -229,26 +230,28 @@ Reload:
 	Return
 
 CheckForUpdate:
-	UrlDownloadToFile, https://david.szilvasi.family/WindowSaver/version.data, version.data
-	FileRead, AppVersion_new, version.data
-	If (AppVersion != AppVersion_new)
-	{
-		MsgBox 4, %AppTitle%,
-		(
-A newer, better version of %AppTitle% is available!
-Current version: %AppVersion%
-New version: %AppVersion_new%
+; 	UrlDownloadToFile, https://david.szilvasi.family/WindowSaver/version.data, version_new.data
+; 	FileRead, AppVersion_new, version_new.data
+; 	If (AppVersion != AppVersion_new)
+; 	{
+; 		MsgBox 4, %AppTitle%,
+; 		(
+; A newer, better version of %AppTitle% is available!
+; Current version: %AppVersion%
+; New version: %AppVersion_new%
 
-Would you like to update?
-		)
-		IfMsgBox, Yes
-		{
-			UrlDownloadToFile, https://david.szilvasi.family/WindowSaver/latest/WindowSaver.exe, WindowSaver.exe
-			Goto Reload
-		}
-	} Else {
+; Would you like to update?
+; 		)
+; 		IfMsgBox, Yes
+; 		{
+; 			UrlDownloadToFile, https://dell.box.com/shared/static/yrsal6y2pg3xentufcxb46zn9nft8hry.ex_e, WindowSaver.exe
+; 			FileCopy, version_new.data, version.data, 1
+; 			FileDelete, version_new.data
+; 			Goto Reload
+; 		}
+; 	} Else {
 		MsgBox 0, %AppTitle%, You already have the latest version of %AppTitle%!
-	}
+	; }
 	Return
 
 DebugMode:
