@@ -8,7 +8,6 @@
 #SingleInstance, Force
 SendMode Input
 SetWorkingDir %A_ScriptDir%
-FileInstall, version.data, version.data
 FileInstall, Icon.ico, Icon.ico
 DetectHiddenWindows, On
 SetTitleMatchMode, 2
@@ -18,9 +17,9 @@ ListLines, Off
 FileName :="window.cfg"
 Author := "David Szilvasi"
 Email := "szilvasi.dave@gmail.com"
-FileRead, AppVersion, version.data
+Website := "https://github.com/szilvasidave/WindowSaver/releases"
+AppVersion := "0.9.10"
 AppTitle := "Window Saver " . AppVersion
-debug := 0
 
 Menu, Tray, Icon, Icon.ico
 Menu, Tray, Tip, %AppTitle%
@@ -28,7 +27,6 @@ Menu, Tray, NoStandard
 Menu, Tray, Add, About, About
 Menu, Tray, Add, Reload, Reload
 Menu, Tray, Add, Check for update, CheckForUpdate
-Menu, Tray, Add, Debug Mode, DebugMode
 Menu, Tray, Add
 Menu, Tray, Add, Exit, Exit
 Menu, Tray, Default, About
@@ -128,7 +126,6 @@ SaveWindows:
 
 ;Restore window positions from file
 RestoreWindows:
-	;DetectHiddenWindows, Off
 	WinGetActiveTitle, SavedActiveWindow
   	ParmVals := "Title Class ID FullPath X Y W H Controls"
 	Win_Title:="", Win_Class:="", Win_ID:="", Win_FullPath:="", Win_X:=0, Win_Y:=0, Win_W:=0, Win_H:=0, Win_Controls:=""
@@ -167,19 +164,14 @@ RestoreWindows:
 		WinGet, Win_Class_Count, Count, ahk_class %Win_Class%
 		WinGet, Win_Title_Count, Count, %Win_Title%
 		If WinExist("ahk_id" . Win_ID) {
-			;MsgBox Using ID - %Win_Title%
 			WinMove, ahk_id %Win_ID%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
 		} Else If (WinExist("ahk_class" . Win_Class)) { ; AND (Win_Class_Count == 1)
-			;MsgBox Using class- %Win_Title%
 			WinMove, ahk_class %Win_Class%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
 		} Else If (WinExist(Win_Title)){ ; AND (Win_Title_Count == 1)
-			;MsgBox Using Title - %Win_Title%
 			WinMove, %Win_Title%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
 		} Else If WinExist("ahk_exe" . Win_FullPath) {
-			;MsgBox Using EXE - %Win_Title%
 			WinMove, ahk_exe %Win_FullPath%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H%
 		} Else {
-			;MsgBox Starting program - %Win_Title%
 			Run %Win_FullPath%,,,CurrentAppNewPID
 			WinWait, ahk_pid %CurrentAppNewPID%
 			WinMove, ahk_pid %CurrentAppNewPID%,,%Win_X%,%Win_Y%,%Win_W%,%Win_H% ; This line isnt working
@@ -230,44 +222,6 @@ Reload:
 	Return
 
 CheckForUpdate:
-; 	UrlDownloadToFile, https://david.szilvasi.family/WindowSaver/version.data, version_new.data
-; 	FileRead, AppVersion_new, version_new.data
-; 	If (AppVersion != AppVersion_new)
-; 	{
-; 		MsgBox 4, %AppTitle%,
-; 		(
-; A newer, better version of %AppTitle% is available!
-; Current version: %AppVersion%
-; New version: %AppVersion_new%
-
-; Would you like to update?
-; 		)
-; 		IfMsgBox, Yes
-; 		{
-; 			UrlDownloadToFile, https://dell.box.com/shared/static/yrsal6y2pg3xentufcxb46zn9nft8hry.ex_e, WindowSaver.exe
-; 			FileCopy, version_new.data, version.data, 1
-; 			FileDelete, version_new.data
-; 			Goto Reload
-; 		}
-; 	} Else {
-		MsgBox 0, %AppTitle%, You already have the latest version of %AppTitle%!
-	; }
-	Return
-
-DebugMode:
-	If (debug == 0) {
-		MsgBox 4, %AppTitle%, This mode is for debugging errors in the app. Please use it ONLY if you know what you're doing!`nAre you sure you want to continue?
-		IfMsgBox, YES
-		{
-			debug := 1
-			#KeyHistory, 10
-			ListLines, On
-			Menu, Tray, ToggleCheck, Debug Mode
-			;SplashTextOn, 500, 500, Debug Mode, %KeyHistory%
-		}
-	} Else {
-		debug := 0
-		Menu, Tray, ToggleCheck, Debug Mode
-		;SplashTextOff
-	}
+		MsgBox 0, %AppTitle%, Redirecting to GitHub page.., 4
+		Run, %Website%
 	Return
