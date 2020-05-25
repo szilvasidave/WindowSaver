@@ -33,10 +33,10 @@ Menu, Tray, Default, About
 
 If FileExist(FileName) == ""
 	{
-	FileAppend , , %FileName%
-	IniWrite, "^F12", %FileName%, Settings, SaveCombo
-	IniWrite, "^F1", %FileName%, Settings, LoadCombo
-	IniWrite , "For a list of special keys' symbols go to https://www.autohotkey.com/docs/Hotkeys.htm", %FileName%, Settings, Info
+		FileAppend , , %FileName%
+		IniWrite, "^F12", %FileName%, Settings, SaveCombo
+		IniWrite, "^F1", %FileName%, Settings, LoadCombo
+		IniWrite , "For a list of special keys' symbols go to https://www.autohotkey.com/docs/Hotkeys.htm", %FileName%, Settings, Info
 	}
 IniRead, SaveCombo, %FileName%, Settings, SaveCombo
 IniRead, LoadCombo, %FileName%, Settings, LoadCombo
